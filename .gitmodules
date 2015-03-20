@@ -1,0 +1,3 @@
+[submodule "CI2C"]
+	path = CI2C
+	url = https://github.com/SimonMoinet/CI2C.git
