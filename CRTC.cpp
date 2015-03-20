@@ -12,7 +12,7 @@
 #ifndef CRTC_CPP
 #define CRTC_CPP
 
-#include "/home/jam/Bureau/C++/Classes/CI2C/CI2C.h"
+#include "CI2C/CI2C.h"
 
 class CRTC : public CI2C
 {
