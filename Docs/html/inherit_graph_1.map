@@ -1,0 +1,9 @@
+<map id="Graphe hiérarchique des classes" name="Graphe hiérarchique des classes">
+<area shape="rect" id="node1" title="STL class. " alt="" coords="5,132,109,159"/>
+<area shape="rect" id="node2" href="$classCI2C_1_1ErreurDevNotDefine.html" title="CI2C::ErreurDevNotDefine" alt="" coords="162,5,341,32"/>
+<area shape="rect" id="node3" href="$classCI2C_1_1ErreurOpenDev.html" title="CI2C::ErreurOpenDev" alt="" coords="176,56,327,83"/>
+<area shape="rect" id="node4" href="$classCI2C_1_1ErreurRead.html" title="CI2C::ErreurRead" alt="" coords="188,107,315,133"/>
+<area shape="rect" id="node5" href="$classCI2C_1_1ErreurSetAddrSlave.html" title="CI2C::ErreurSetAddrSlave" alt="" coords="163,157,339,184"/>
+<area shape="rect" id="node6" href="$classCI2C_1_1ErreurSlaveNotDefine.html" title="CI2C::ErreurSlaveNotDefine" alt="" coords="157,208,345,235"/>
+<area shape="rect" id="node7" href="$classCI2C_1_1ErreurWrite.html" title="CI2C::ErreurWrite" alt="" coords="188,259,315,285"/>
+</map>

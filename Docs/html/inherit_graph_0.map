@@ -1,0 +1,4 @@
+<map id="Graphe hiérarchique des classes" name="Graphe hiérarchique des classes">
+<area shape="rect" id="node1" href="$classCI2C.html" title="Cette classe CI2C permet de lire/écrire les valeurs de registres des esclaves d&#39;un bus I2C..." alt="" coords="5,5,59,32"/>
+<area shape="rect" id="node2" href="$classCRTC.html" title="Cette classe permet. " alt="" coords="107,5,167,32"/>
+</map>
