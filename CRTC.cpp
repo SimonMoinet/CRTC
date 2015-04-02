@@ -6,13 +6,55 @@
  * \file CRTC.h
  * Déclaration de la classe CRTC
  * \class CRTC
- * \brief Cette classe permet
  */
 
 #ifndef CRTC_CPP
 #define CRTC_CPP
 
 #include "CI2C/CI2C.h"
+
+// ##############
+// # STRUCTURES #
+// ##############
+
+/**
+ * \struct str_date
+ * \brief Contient les informations sur une date
+ */
+struct str_date
+{
+	int jour_semaine; ///< numero du jour dans la semaine (ex: 1=Lundi, 2=Mardi, ...)
+	int jour_mois; ///< numero du jour dans le mois
+	int mois; ///< numero du mois
+	int annee; ///< numero de l'annee
+};
+
+/**
+ * \struct str_heure
+ * \brief Contient les informations sur une heure
+ */
+struct str_heure
+{
+	int secondes; ///< valeur des secondes
+	int minutes; ///< valeur des minutes
+	int heures; ///< valeur des heures
+	CRTC::PERIODE_HORAIRE pHoraire = NULL; ///< Contient AM/PM si on est en mode 12H
+};
+
+/**
+ * \struct
+ * \brief Contient les informations sur une heure et sur une date
+ */
+struct str_dateHeure
+{
+	str_date date; ///< structure contenant les informations sur la date
+	str_heure heure; ///< structure contenant les informations sur l'heure
+};
+
+
+// ################
+// # CLASSES CRTC #
+// ################
 
 class CRTC : public CI2C
 {
@@ -95,9 +137,45 @@ class CRTC : public CI2C
 		 */
 		void setRTCMinutes(int minutes);
 
+		/**
+		 * \brief Methode setRTCHeures
+		 *
+		 * Cette methode permet de changer la valeur du registre correspondant aux heures
+		 * de l'horloge RTC lorsqu'on utilise le mode 24H
+		 *
+		 * \param[in] heures La nouvelle valeur des heures que l'on veux mettre dans le registre
+		 */
 		void setRTCHeures(int heures);
-		void setRTCHeures(int heures)
+		void setRTCHeures(int heures, PERIODE_HORAIRE pHoraire);
+		void setRTCJourSemaine(int jour_semaine);
+		void setRTCJourMois(int jour_mois);
+		void setRTCMois(int mois);
+		void setRTCAnnee(int annee);
 
+		void setRTCDate(str_date date);
+		void setRTCTime(str_heure heure);
+		void setRTCDateTime(str_dateHeure dateHeure);
+
+		void setModeHeure(MODE_HEURE mode, int heure = 1);
+
+		// ######################################################
+		// # METHODES DE RECUPERATION DES VALEURS DES REGISTRES #
+		// # DE L'HORLOGE RTC 									#
+		// ######################################################
+
+		int getRTCSecondes() const;
+		int getRTCMinutes() const;
+		int getRTCHeures(MODE_HEURE &mode) const;
+		int getRTCJourSemaine() const;
+		int getRTCJourMois() const;
+		int getRTCMois() const;
+		int getRTCAnnee() const;
+
+		str_date getRTCDate() const;
+		str_heure getRTCTime() const;
+		str_dateHeure getRTCDateHeure() const;
+
+		MODE_HEURE getRTCModeHeure() const;
 };
 
 #endif // CRTC_CPP
