@@ -1,181 +1,272 @@
-/**
- * \mainpage Classe CRTC
- * \author Simon Moinet
- * \date Mars 2015
- *
- * \file CRTC.h
- * Déclaration de la classe CRTC
- * \class CRTC
- */
+#include "CRTC.h"
 
-#ifndef CRTC_CPP
-#define CRTC_CPP
+// ##############################
+// # CONSTRUCTEUR - DESTRUCTEUR #
+// ##############################
 
-#include "CI2C/CI2C.h"
+CRTC::CRTC() {}
 
-// ##############
-// # STRUCTURES #
-// ##############
+CRTC::~CRTC() {}
 
-/**
- * \struct str_date
- * \brief Contient les informations sur une date
- */
-struct str_date
+// ######################################################
+// # METHODES DE MODIFICATION DES VALEURS DES REGISTRES #
+// # DE L'HORLOGE RTC 									#
+// ######################################################
+
+void CRTC::setRTCValReg(__u8 val, __u8 reg)
 {
-	int jour_semaine; ///< numero du jour dans la semaine (ex: 1=Lundi, 2=Mardi, ...)
-	int jour_mois; ///< numero du jour dans le mois
-	int mois; ///< numero du mois
-	int annee; ///< numero de l'annee
-};
+	__u8 valEnvoye = val;
 
-/**
- * \struct str_heure
- * \brief Contient les informations sur une heure
- */
-struct str_heure
+	if( val > 9 )
+	{
+		valEnvoye = (val/10) << 4;
+		valEnvoye += val % 10;
+	}
+
+	writeByte(reg, valEnvoye);
+}
+
+void CRTC::setRTCSecondes(int secondes)
 {
-	int secondes; ///< valeur des secondes
-	int minutes; ///< valeur des minutes
-	int heures; ///< valeur des heures
-	CRTC::PERIODE_HORAIRE pHoraire = NULL; ///< Contient AM/PM si on est en mode 12H
-};
+	setRTCValReg(
+		static_cast<__u8>(ADDR_REG::SECONDES),
+		static_cast<__u8>(secondes)
+		)
+}
 
-/**
- * \struct
- * \brief Contient les informations sur une heure et sur une date
- */
-struct str_dateHeure
+void CRTC::setRTCMinutes(int minutes)
 {
-	str_date date; ///< structure contenant les informations sur la date
-	str_heure heure; ///< structure contenant les informations sur l'heure
-};
+	setRTCValReg(
+		static_cast<__u8>(ADDR_REG::MINUTES),
+		static_cast<__u8>(minutes)
+		)
+}
 
-
-// ################
-// # CLASSES CRTC #
-// ################
-
-class CRTC : public CI2C
+void CRTC::setRTCHeures(int heures)
 {
-	public:
-		// ###############
-		// # ENUMERATION #
-		// ###############
-		
-		/**
-		 * \enum ADDR_REG
-		 * Cette enumeration liste les registres de l'horloge RTC
-		 */
-		enum class ADDR_REG : __u8
-		{
-			SECONDES, ///< 0x01 : Registre contenant la valeur des secondes
-			MINUTES, ///< 0x01 : Registre contenant la valeur des minutes
-			HEURES, ///< 0x02 : Registre contenant la valeur des heures
-			JOUR_SEMAINE, ///< 0x03 : Registre contenant le numero du jour de la semaine
-			JOUR_MOIS, ///< 0x04 : Registre contenant le numero du jour dans le mois
-			MOIS, ///< 0x05 : Registre contenant le numero du mois
-			ANNEE ///< 0x06 : Registre contenant la valeur de l'année
-		};
+	if( getRTCModeHeure() != MODE_HEURE::24H )
+		throw ErreurModeHeure(MODE_HEURE::12H);
 
-		/**
-		 * \enum MODE_HEURE
-		 * Cette enumeration liste les deux modes des heures de l'horloge RTC
-		 */
-		enum class MODE_HEURE : __u8
-		{
-			12H, ///< Mode 12H : system horaire 12 heure (de 1h à 12h avec AM/PM)
-			24H ///< Mode 24H : system horaire 24 heure (de 0h à 23h)
-		};
+	setRTCValReg(
+		static_cast<__u8>(ADDR_REG::HEURES),
+		static_cast<__u8>(heures)
+		)
+}
 
-		/**
-		 * \enum SYSTEM_HORAIRE
-		 * Cette enumeration liste les systemes horaires AM et PM
-		 */
-		enum class PERIODE_HORAIRE : __u8
-		{
-			AM, ///< AM : De 0 heure à 11 heure
-			PM ///< PM : De 12 heure à 23 heure
-		};
+void CRTC::setRTCHeures(int heures, PERIODE_HORAIRE pHoraire)
+{
+	if( getRTCModeHeure() != MODE_HEURE::12H )
+		throw ErreurModeHeure(MODE_HEURE::24H);
 
-		// ##############################
-		// # CONSTRUCTEUR - DESTRUCTEUR #
-		// ##############################
-		
-		/**
-		 * \brief Constructeur de la class CRTC
-		 */
-		CRTC();
+	const int masque_mode = 0x40;
+	const int masque_pm = 0x20;
+	int valEnvoye = 0;
 
-		/**
-		 * \brief Destructeur de la classe CRTC
-		 */
-		~CRTC();
+	valEnvoye = (val/10) << 4;
+	valEnvoye += val % 10;
 
-		// ######################################################
-		// # METHODES DE MODIFICATION DES VALEURS DES REGISTRES #
-		// # DE L'HORLOGE RTC 									#
-		// ######################################################
+	valEnvoye |= masque_mode;
 
-		/**
-		 * \brief Methode setRTCSecondes
-		 *
-		 * Cette Methode permet de changer la valeur du registre correspondant aux secondes
-		 * de l'horloge RTC
-		 *
-		 * \param[in] secondes La nouvelle valeur des secondes que l'on veux mettre dans le registre
-		 */
-		void setRTCSecondes(int secondes);
+	if( pHoraire == PERIODE_HORAIRE::PM )
+		valEnvoye |= masque_pm;
 
-		/**
-		 * \brief Methode setRTCMinutes
-		 *
-		 * Cette Methode permet de changer la valeur du registre correspondant aux minutes
-		 * de l'horloge RTC
-		 *
-		 * \param[in] minutes La nouvelle valeur des minutes que l'on veux mettre dans le registre
-		 */
-		void setRTCMinutes(int minutes);
+	writeByte(
+		static_cast<__u8>(ADDR_REG::HEURES),
+		static_cast<__u8>(valEnvoye)
+		)
+}
 
-		/**
-		 * \brief Methode setRTCHeures
-		 *
-		 * Cette methode permet de changer la valeur du registre correspondant aux heures
-		 * de l'horloge RTC lorsqu'on utilise le mode 24H
-		 *
-		 * \param[in] heures La nouvelle valeur des heures que l'on veux mettre dans le registre
-		 */
-		void setRTCHeures(int heures);
-		void setRTCHeures(int heures, PERIODE_HORAIRE pHoraire);
-		void setRTCJourSemaine(int jour_semaine);
-		void setRTCJourMois(int jour_mois);
-		void setRTCMois(int mois);
-		void setRTCAnnee(int annee);
+void CRTC::setRTCJourSemaine(int jour_semaine)
+{
+	setRTCValReg(
+		static_cast<__u8>(ADDR_REG::JOUR_SEMAINE),
+		static_cast<__u8>(jour_semaine)
+		)
+}
+}
 
-		void setRTCDate(str_date date);
-		void setRTCTime(str_heure heure);
-		void setRTCDateTime(str_dateHeure dateHeure);
+void CRTC::setRTCJourMois(int jour_mois)
+{
+	setRTCValReg(
+		static_cast<__u8>(ADDR_REG::JOUR_MOIS),
+		static_cast<__u8>(jour_mois)
+		)
+}
+}
 
-		void setModeHeure(MODE_HEURE mode, int heure = 1);
+void CRTC::setRTCMois(int mois)
+{
+	setRTCValReg(
+		static_cast<__u8>(ADDR_REG::MOIS),
+		static_cast<__u8>(mois)
+		)
+}
+}
 
-		// ######################################################
-		// # METHODES DE RECUPERATION DES VALEURS DES REGISTRES #
-		// # DE L'HORLOGE RTC 									#
-		// ######################################################
+void CRTC::setRTCAnnee(int annee)
+{
+	setRTCValReg(
+		static_cast<__u8>(ADDR_REG::ANNEE),
+		static_cast<__u8>(annee)
+		)
+}
+}
 
-		int getRTCSecondes() const;
-		int getRTCMinutes() const;
-		int getRTCHeures(MODE_HEURE &mode) const;
-		int getRTCJourSemaine() const;
-		int getRTCJourMois() const;
-		int getRTCMois() const;
-		int getRTCAnnee() const;
+void CRTC::setRTCDate(str_date date)
+{
+	setRTCJourSemaine(date.jour_semaine);
+	setRTCJourMois(date.jour_mois);
+	setRTCMois(date.mois);
+	setRTCAnnee(date.annee);
+}
 
-		str_date getRTCDate() const;
-		str_heure getRTCTime() const;
-		str_dateHeure getRTCDateHeure() const;
+void CRTC::setRTCTime(str_heure heure)
+{
+	setRTCSecondes(heure.secondes);
+	setRTCMinutes(heure.minutes);
 
-		MODE_HEURE getRTCModeHeure() const;
-};
 
-#endif // CRTC_CPP
+	if( heure.mode == MODE_HEURE::12H ) 
+		setRTCHeures(heure.heure, heure.pHoraire);
+	else
+		setRTCHeures(heure.heure);
+}
+
+void CRTC::setRTCDateTime(str_dateHeure dateHeure)
+{
+	setRTCDate(dateHeure.date);
+	setRTCTime(dateHeure.heure);
+}
+
+// ######################################################
+// # METHODES DE RECUPERATION DES VALEURS DES REGISTRES #
+// # DE L'HORLOGE RTC 									#
+// ######################################################
+
+int CRTC::getRTCValReg(__u8 reg)
+{
+	const int masque_premier_octet = 0x0F;
+	const int masque_deuxieme_octet = 0xF0;
+	int data = readByte(reg);
+	int res = 0;
+
+	if( data < 9)
+		return data;
+
+	res = data & masque_premier_octet;
+	res += 10 * ((data & masque_deuxieme_octet) >> 4);
+
+	return res;
+}
+
+int CRTC::getRTCSecondes() const
+{
+	return getRTCValReg(static_cast<__u8>(ADDR_REG::SECONDES));
+}
+
+int CRTC::getRTCMinutes() const
+{
+	return getRTCValReg(static_cast<__u8>(ADDR_REG::MINUTES));
+}
+
+int CRTC::getRTCHeures() const
+{
+	if( getRTCModeHeure() != MODE_HEURE::24H)
+		throw ErreurModeHeure(MODE_HEURE::12H);
+
+	return getRTCValReg(static_cast<__u8>(ADDR_REG::HEURES));
+}
+
+int CRTC::getRTCHeures(PERIODE_HORAIRE &pHoraire) const
+{
+	const int masque_premier_octet = 0x0F;
+	const int masque_deuxieme_octet = 0xF0;
+	const int masque_pm = 0x20;
+	const int masque_delete_mode = 0xBF;
+	const int masque_delete_pm = 0xDF;
+	int data = readByte(static_cast<__u8>(ADDR_REG::HEURES));
+	int res = 0;
+
+	if( getRTCModeHeure() != MODE_HEURE::12H )
+		throw ErreurModeHeure(MODE_HEURE::24H);
+
+	if( ((data & masque_pm) >> 5) == 1)
+		pHoraire = PERIODE_HORAIRE::PM;
+	else
+		pHoraire = PERIODE_HORAIRE::AM;
+
+	data &= masque_delete_pm;
+	data &= masque_delete_mode;
+
+	res = data & masque_premier_octet;
+	res += 10 * ((data & masque_deuxieme_octet) >> 4);
+
+	return res
+}
+
+int CRTC::getRTCJourSemaine() const
+{
+	return getRTCValReg(static_cast<__u8>(ADDR_REG::JOUR_SEMAINE));
+}
+
+int CRTC::getRTCJourMois() const
+{
+	return getRTCValReg(static_cast<__u8>(ADDR_REG::JOUR_MOIS));
+}
+
+int CRTC::getRTCMois() const
+{
+	return getRTCValReg(static_cast<__u8>(ADDR_REG::MOIS));
+}
+
+int CRTC::getRTCAnnee() const
+{
+	return getRTCValReg(static_cast<__u8>(ADDR_REG::ANNEE));
+}
+
+str_date CRTC::getRTCDate() const
+{
+	str_date temp;
+
+	temp.jour_semaine = getRTCJourSemaine();
+	temp.jour_mois = getRTCJourMois();
+	temp.mois = getRTCMois();
+	temp.annee = getRTCAnnee();
+
+	return temp;
+}
+
+str_heure CRTC::getRTCTime() const
+{
+	str_heure temp;
+
+	temp.secondes = getRTCSecondes();
+	temp.minutes = getRTCMinutes();
+	temp.mode = getRTCModeHeure();
+
+	if( temp.mode == MODE_HEURE::12H ) 
+		temp.heure = getRTCHeures(temp.pHoraire);
+	else
+		temp.heure = getRTCHeures();
+
+	return temp;
+}
+
+str_dateHeure CRTC::getRTCDateHeure() const
+{
+	str_dateHeure temp;
+
+	temp.date = getRTCDate();
+	temp.heure = getRTCTime();
+}
+
+MODE_HEURE CRTC::getRTCModeHeure() const
+{
+	const int masque_mode = 0x40;
+	int data = readByte(static_cast<__u8>(ADDR_REG::HEURES));
+
+	if( ((data & masque_mode) >> 6) == 1)
+		return MODE_HEURE::12H;
+	else
+		return MODE_HEURE::24H;
+}
